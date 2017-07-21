@@ -15,6 +15,10 @@ const SUPPORTED_BROWSERS = [
   'Opera >= 12',
 ];
 
+const createStyleLoader = (isDevServer, publicPath) => (use) => {
+	return isDevServer ? ['style-loader', ...use] : ExtractTextPlugin.extract({ publicPath, use })	
+}
+
 /**
  * Exports the settings for css modules in webpack.config
  *
@@ -27,6 +31,8 @@ const SUPPORTED_BROWSERS = [
  * @returns {{rules: [*,*,*,*]}}
  */
 module.exports = (ENV, { FILES_PATH, SRC, ROOT }) => {
+  const isDevServer = ENV === 'devserver';
+  const styleLoader = createStyleLoader(isDevServer, FILES_PATH)
   const cssLoaders = [
     {
       loader: 'css-loader',
@@ -51,9 +57,7 @@ module.exports = (ENV, { FILES_PATH, SRC, ROOT }) => {
     rules: [
       {
         test: /\.scss$/,
-        loader: ExtractTextPlugin.extract({
-          publicPath: FILES_PATH,
-          use: [
+        loader: styleLoader([
             ...cssLoaders,
             {
               loader: 'resolve-url-loader',
@@ -69,15 +73,11 @@ module.exports = (ENV, { FILES_PATH, SRC, ROOT }) => {
                 sourceMap: true,
               },
             },
-          ],
-        }),
+        ]),
       },
       {
         test: /\.css$/,
-        loader: ExtractTextPlugin.extract({
-          publicPath: FILES_PATH,
-          use: cssLoaders,
-        }),
+        loader: styleLoader(cssLoaders),
       },
       {
         test: /\.(png|gif|jpg|svg)$/,
